@@ -1521,6 +1521,34 @@ function saveReport() {
   md += `---\n\n`;
   md += `*报告由四大维度天赋测评系统生成*  `;
 
+  // ============================================================
+  //  附加：答题记录（问题和用户答案）
+  // ============================================================
+  md += `\n\n---\n\n`;
+  md += `## 📝 答题记录\n\n`;
+  md += `以下是你在测评中回答的全部问题：\n\n`;
+
+  const SECTION_NAMES = ['🧠 MBTI', '🛠️ 霍兰德', '🌊 大五人格', '🔬 卡特尔16PF'];
+  const LIKERT_LABELS = ['非常不符合', '比较不符合', '不确定', '比较符合', '非常符合'];
+
+  QUESTIONS.forEach((q, i) => {
+    const sectionName = SECTION_NAMES[q.section] || '';
+    const ans = state.answers[q.id];
+    let ansText = '⏺ 未作答';
+
+    if (ans !== null && ans !== undefined) {
+      if (q.type === 'mbti') {
+        ansText = ans === 'A' ? q.descA : q.descB;
+      } else {
+        const label = LIKERT_LABELS[ans - 1];
+        ansText = label ? `${ans} - ${label}` : `评分 ${ans}`;
+      }
+    }
+
+    md += `**Q${i + 1}.** [${sectionName}] ${q.text}\n\n`;
+    md += `> 你的回答：${ansText}\n\n`;
+  });
+
   // 下载 .md 文件
   const filename = `${displayName}_天赋测评报告_${new Date().toISOString().slice(0,10)}.md`;
   const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
