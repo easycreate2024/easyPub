@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四大维度天赋测评 - 找到你的天赋职业</title>
+<style>
+  :root {
+    --primary: #6C5CE7;
+    --primary-light: #a29bfe;
+    --secondary: #00cec9;
+    --accent: #fd79a8;
+    --bg: #0a0a1a;
+    --card-bg: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.1);
+    --text: #e0e0e0;
+    --text-light: #999;
+    --success: #00b894;
+    --warning: #fdcb6e;
+    --danger: #e17055;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(0,206,201,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(253,121,168,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+  .header h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
+  .header .subtitle {
+    color: var(--text-light);
+    font-size: 14px;
+    margin-top: 8px;
+    letter-spacing: 4px;
+  }
+
+  /* Progress Bar */
+  .progress-wrapper {
+    padding: 10px 0 20px;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.22,1,0.36,1);
+    width: 0%;
+  }
+
+  /* Section Indicator */
+  .section-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 0 20px;
+  }
+  .section-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-light);
+    border: 1px solid transparent;
+    transition: all 0.4s;
+  }
+  .section-dot.active {
+    background: rgba(108,92,231,0.2);
+    border-color: var(--primary);
+    color: var(--primary-light);
+  }
+  .section-dot.done {
+    background: rgba(0,206,201,0.15);
+    border-color: var(--secondary);
+    color: var(--secondary);
+  }
+  .section-dot .num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,0.1);
+  }
+  .section-dot.active .num { background: var(--primary); color: #fff; }
+  .section-dot.done .num { background: var(--secondary); color: #fff; }
+
+  /* Page container */
+  .page {
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+  .page.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* Welcome Page */
+  .welcome-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+  .welcome-card .icon { font-size: 64px; margin-bottom: 20px; }
+  .welcome-card h2 { font-size: 24px; margin-bottom: 12px; }
+  .welcome-card p {
+    color: var(--text-light);
+    line-height: 1.8;
+    font-size: 14px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .welcome-card .methods {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 24px auto;
+    max-width: 500px;
+  }
+  .method-tag {
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px;
+    transition: all 0.3s;
+  }
+  .method-tag:hover {
+    background: rgba(108,92,231,0.1);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+  .method-tag .label { font-weight: 700; color: var(--primary-light); }
+  .method-tag .desc { color: var(--text-light); font-size: 12px; margin-top: 4px; }
+
+  .btn {
+    display: inline-block;
+    padding: 14px 40px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: linear-gradient(135deg, var(--primary), #8B5CF6);
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(108,92,231,0.4);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+  }
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.12);
+    box-shadow: none;
+  }
+  .btn-sm {
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+
+  /* Question Card */
+  .question-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+  }
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .question-section-label {
+    font-size: 12px;
+    color: var(--primary-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .question-number {
+    font-size: 13px;
+    color: var(--text-light);
+  }
+  .question-text {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+  .question-dimension {
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    letter-spacing: 2px;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option {
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 2px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 15px;
+    position: relative;
+  }
+  .option:hover {
+    border-color: rgba(108,92,231,0.3);
+    background: rgba(108,92,231,0.05);
+  }
+  .option.selected {
+    border-color: var(--primary);
+    background: rgba(108,92,231,0.12);
+  }
+
+  /* Likert Scale */
+  .likert-options {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .likert-option {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 2px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 13px;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .likert-option .value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .likert-option:hover {
+    border-color: rgba(108,92,231,0.3);
+    background: rgba(108,92,231,0.05);
+  }
+  .likert-option.selected {
+    border-color: var(--primary);
+    background: rgba(108,92,231,0.15);
+    color: var(--primary-light);
+  }
+  .likert-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
+
+  /* MBTI forced choice */
+  .mbti-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .mbti-option {
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 2px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .mbti-option:hover {
+    border-color: rgba(108,92,231,0.3);
+    background: rgba(108,92,231,0.05);
+  }
+  .mbti-option.selected {
+    border-color: var(--primary);
+    background: rgba(108,92,231,0.15);
+    box-shadow: 0 0 20px rgba(108,92,231,0.15);
+  }
+  .mbti-option .option-label {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  /* Navigation */
+  .question-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    gap: 12px;
+  }
+
+  /* Name Prompt */
+  .name-prompt {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .name-prompt-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+  }
+  .name-prompt h2 {
+    font-size: 26px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .name-input-wrapper {
+    max-width: 340px;
+    margin: 0 auto 20px;
+  }
+  .name-input {
+    width: 100%;
+    padding: 14px 20px;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    color: #eee;
+    font-size: 18px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+  }
+  .name-input:focus {
+    border-color: var(--primary);
+  }
+  .name-input::placeholder {
+    color: rgba(255,255,255,0.3);
+    font-size: 16px;
+  }
+
+  /* Result Page */
+  .result-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .result-section h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .result-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--primary-light);
+  }
+  .result-section .score-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+  }
+  .result-section .score-row:last-child { border-bottom: none; }
+  .result-section .score-label { color: var(--text-light); }
+  .result-section .score-value { font-weight: 600; }
+  .result-section .score-bar-bg {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .result-section .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+  }
+
+  .career-card {
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: rgba(0,206,201,0.08);
+    border: 1px solid rgba(0,206,201,0.15);
+  }
+  .career-card h4 {
+    color: var(--secondary);
+    margin-bottom: 6px;
+    font-size: 16px;
+  }
+  .career-card p {
+    color: var(--text-light);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .career-card.bad {
+    background: rgba(225,112,85,0.08);
+    border-color: rgba(225,112,85,0.15);
+  }
+  .career-card.bad h4 { color: var(--accent); }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    background: rgba(108,92,231,0.15);
+    color: var(--primary-light);
+    margin: 2px 4px 2px 0;
+  }
+
+  /* Summary */
+  .summary-box {
+    padding: 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(0,206,201,0.1));
+    border: 1px solid rgba(108,92,231,0.2);
+    margin: 16px 0;
+    text-align: center;
+  }
+  .summary-box .big-text {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .summary-box p {
+    color: var(--text-light);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* Canvas */
+  .chart-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  #radarChart {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Result compact styles */
+  .section-title { font-size:18px; font-weight:700; margin-bottom:14px; }
+  .section-title .icon { margin-right:8px; }
+  .dim-row { display:flex; align-items:center; gap:10px; padding:6px 0; font-size:14px; }
+  .dim-label { min-width:80px; color:var(--text-light); }
+  .dim-bar-bg { flex:1; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+  .dim-bar-fill { height:100%; border-radius:4px; transition:width 1s ease; background:linear-gradient(90deg, var(--primary), var(--secondary)); }
+  .dim-value { min-width:36px; text-align:right; font-weight:600; color:var(--primary-light); }
+  .pf-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .pf-grid .dim-row { padding:4px 0; font-size:13px; }
+
+  /* Type Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, var(--primary), #8B5CF6);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin: 10px 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .app-container { padding: 12px; }
+    .welcome-card { padding: 24px 16px; }
+    .question-card { padding: 20px 16px; }
+    .question-text { font-size: 16px; }
+    .mbti-options { grid-template-columns: 1fr; }
+    .likert-option { font-size: 11px; padding: 8px 2px; min-height: 50px; }
+    .likert-option .value { font-size: 16px; }
+    .section-indicators { gap: 6px; flex-wrap: wrap; }
+    .section-dot { padding: 4px 10px; font-size: 11px; }
+    .result-section { padding: 20px 16px; }
+    .header h1 { font-size: 22px; }
+    .methods { grid-template-columns: 1fr !important; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* Transition helpers */
+  .hidden { display: none !important; }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+  }
+  .loading .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+  <!-- Header -->
+  <div class="header">
+    <h1>✦ 四大维度天赋测评</h1>
+    <div class="subtitle">MBTI · 霍兰德 · 大五人格 · 卡特尔16PF</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrapper" id="progressWrapper" style="display:none">
+    <div class="progress-info">
+      <span id="progressLabel">MBTI 测试</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- Section Indicators -->
+  <div class="section-indicators" id="sectionIndicators" style="display:none">
+    <div class="section-dot active" data-section="0">
+      <span class="num">1</span> MBTI
+    </div>
+    <div class="section-dot" data-section="1">
+      <span class="num">2</span> 霍兰德
+    </div>
+    <div class="section-dot" data-section="2">
+      <span class="num">3</span> 大五人格
+    </div>
+    <div class="section-dot" data-section="3">
+      <span class="num">4</span> 16PF
+    </div>
+  </div>
+
+  <!-- ============ PAGE: WELCOME ============ -->
+  <div class="page active" id="pageWelcome">
+    <div class="welcome-card">
+      <div class="icon">🧬</div>
+      <h2>发现你的天赋职业</h2>
+      <p>本测试融合了心理学四大经典测评体系，从性格类型、职业兴趣、人格特质、深层心理四个维度全面分析你的天赋特质，精准定位最适合你的职业方向。</p>
+      <div class="methods">
+        <div class="method-tag"><div class="label">🧠 MBTI</div><div class="desc">16型人格 · 性格偏好</div></div>
+        <div class="method-tag"><div class="label">🛠️ 霍兰德</div><div class="desc">RIASEC · 职业兴趣</div></div>
+        <div class="method-tag"><div class="label">🌊 大五人格</div><div class="desc">OCEAN · 核心特质</div></div>
+        <div class="method-tag"><div class="label">🔬 16PF</div><div class="desc">卡特尔 · 深层心理</div></div>
+      </div>
+      <p style="color:var(--text-light);font-size:13px;margin-bottom:20px;">
+        ⏱ 共 96 题 · 约 15-20 分钟 · 请按第一反应作答
+      </p>
+      <button class="btn" onclick="startTest()">开始测试 →</button>
+    </div>
+  </div>
+
+  <!-- ============ PAGE: TEST ============ -->
+  <div class="page" id="pageTest">
+    <div class="question-card" id="questionCard">
+      <div id="questionContent"></div>
+      <div class="question-nav">
+        <button class="btn btn-secondary btn-sm" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE: RESULT ============ -->
+  <div class="page" id="pageResult">
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+//  DATA: All Questions
+// ===================================================================
+
+const SECTIONS = [
+  { key: 'mbti', label: 'MBTI 性格类型', short: 'MBTI' },
+  { key: 'holland', label: '霍兰德职业兴趣', short: '霍兰德' },
+  { key: 'bigfive', label: '大五人格', short: '大五' },
+  { key: 'pf16', label: '卡特尔16PF', short: '16PF' },
+];
+
+// ---------- MBTI (20 questions, forced choice) ----------
+const MBTI_DIMS = [
+  { key: 'EI', labelA: '外向 (E)', labelB: '内向 (I)', questions: [
+    { text: '和朋友在一起让我感到精力充沛', descA: '社交让我充满能量', descB: '独处才能给我充电' },
+    { text: '我喜欢成为聚会/会议中的焦点', descA: '我享受被关注的感觉', descB: '我更愿意低调旁观' },
+    { text: '我更倾向于团队讨论来理清思路', descA: '和别人讨论让我思路更清晰', descB: '我需要独自安静思考' },
+    { text: '我交友广泛，喜欢与不同类型的人来往', descA: '我喜欢广泛的社交圈', descB: '我只有少数几位知己' },
+    { text: '我说话时倾向于边想边说', descA: '说着说着思路才清晰', descB: '想好了再开口' },
+  ]},
+  { key: 'SN', labelA: '感觉 (S)', labelB: '直觉 (N)', questions: [
+    { text: '我关注具体细节和实际经验', descA: '我习惯关注看得见摸得着的细节', descB: '我更关注整体模式和可能性' },
+    { text: '我更相信眼见为实的事实依据', descA: '事实和数据才能让我信服', descB: '我相信直觉和第六感' },
+    { text: '我更注重当下的情况和实际问题', descA: '先管好眼前的事', descB: '我更关注未来的可能性' },
+    { text: '我喜欢按部就班、稳妥可靠的方法', descA: '我偏好熟悉且可靠的做法', descB: '我更喜欢尝试新的方法' },
+    { text: '阅读时我更关注事实和具体信息', descA: '我留意具体的数据和事例', descB: '我关注观点和整体意义' },
+  ]},
+  { key: 'TF', labelA: '思考 (T)', labelB: '情感 (F)', questions: [
+    { text: '我做决定时主要依靠逻辑分析', descA: '我用理性逻辑做判断', descB: '我凭内心感受做决定' },
+    { text: '我注重公平公正，即使可能伤害感情', descA: '原则比人情更重要', descB: '我不想伤害任何人的感受' },
+    { text: '我善于客观地分析问题和矛盾', descA: '我能冷静客观地分析问题', descB: '我更关注当事人的感受' },
+    { text: '我说话直接了当，不喜欢拐弯抹角', descA: '有话直说，不绕弯子', descB: '我会考虑对方感受委婉表达' },
+    { text: '我更在意事情本身的对错', descA: '对错分明，较真不怕伤和气', descB: '和为贵，伤感情的事要慎重' },
+  ]},
+  { key: 'JP', labelA: '判断 (J)', labelB: '感知 (P)', questions: [
+    { text: '我喜欢事事有计划、按安排行事', descA: '有计划我才安心', descB: '随遇而安，计划赶不上变化' },
+    { text: '我喜欢事情有明确的结论和结果', descA: '事情定了我就安心了', descB: '我享受保持开放选择' },
+    { text: '我做事有条不紊、有始有终', descA: '善始善终是我的习惯', descB: '我做事灵活，看心情调整' },
+    { text: '我偏好预先规划好的生活方式', descA: '提前安排让我更有控制感', descB: '自由随性让我更自在' },
+    { text: '截止日期对我来说非常重要必须遵守', descA: '截止日是红线，必须遵守', descB: '截止日是参考，灵活处理' },
+  ]},
+];
+
+// ---------- Holland (24 questions, 5-point) ----------
+const HOLLAND_TYPES = [
+  { key: 'R', label: '现实型 (R)', desc: '动手操作、机械制造', questions: [
+    '我喜欢修理或组装机器/电子设备',
+    '我擅长手工制作或模型搭建',
+    '我喜欢户外活动和体力劳动',
+    '我对工程/机械技术类的知识很感兴趣',
+  ]},
+  { key: 'I', label: '研究型 (I)', desc: '科学探索、分析研究', questions: [
+    '我喜欢探索科学问题和自然现象',
+    '我乐于分析数据和寻找规律',
+    '我对新发现和理论创新充满好奇',
+    '我喜欢独立解决复杂的智力难题',
+  ]},
+  { key: 'A', label: '艺术型 (A)', desc: '创意表达、审美设计', questions: [
+    '我有丰富的想象力和创造力',
+    '我喜欢音乐/绘画/写作等艺术形式',
+    '我追求独特、新颖的自我表达',
+    '我对美的事物有敏锐的感受力',
+  ]},
+  { key: 'S', label: '社会型 (S)', desc: '助人育人、人际服务', questions: [
+    '我喜欢帮助他人成长和解决问题',
+    '我善于倾听并理解他人的感受',
+    '我乐于参加志愿者或公益活动',
+    '我喜欢教导/培训/辅导他人',
+  ]},
+  { key: 'E', label: '企业型 (E)', desc: '领导管理、商业经营', questions: [
+    '我喜欢领导和组织团队完成任务',
+    '我有较强的说服和谈判能力',
+    '我喜欢参与商业竞争和挑战',
+    '我敢于冒险并追求成就',
+  ]},
+  { key: 'C', label: '常规型 (C)', desc: '秩序规范、数据管理', questions: [
+    '我喜欢有条理、有秩序的工作环境',
+    '我善于处理数据/文档/账目等细节',
+    '我注重精确性和准确无误',
+    '我喜欢遵循既定的流程和规范',
+  ]},
+];
+
+// ---------- Big Five (20 questions, 5-point) ----------
+const BIGFIVE_DIMS = [
+  { key: 'O', label: '开放性 (O)', reverse: false, questions: [
+    '我对新体验和新观念持开放态度',
+    '我喜欢思考抽象和深奥的问题',
+    '我对艺术、美学有浓厚的兴趣',
+    '我乐于尝试从未做过的事情',
+  ]},
+  { key: 'C', label: '尽责性 (C)', reverse: false, questions: [
+    '我做事认真负责、一丝不苟',
+    '我喜欢规整有序的生活和工作',
+    '我总是按时完成任务从不拖延',
+    '我对自己有很高的标准和追求',
+  ]},
+  { key: 'E', label: '外向性 (E)', reverse: false, questions: [
+    '我精力充沛，活力四射',
+    '我喜欢热闹的社交场合',
+    '我很容易和陌生人交谈',
+    '我享受成为众人关注的中心',
+  ]},
+  { key: 'A', label: '宜人性 (A)', reverse: false, questions: [
+    '我富有同情心，容易体谅他人',
+    '我乐于助人，把别人需求放在前面',
+    '我倾向于信任他人而不是怀疑',
+    '我注重合作共赢而非竞争对抗',
+  ]},
+  { key: 'N', label: '神经质 (N)', reverse: true, questions: [
+    '我容易感到焦虑和紧张',
+    '我的情绪波动比较大',
+    '我经常担忧未来的事情',
+    '我容易因为小事而感到压力',
+  ]},
+];
+
+// ---------- 16PF (32 questions, 5-point) ----------
+const PF16_FACTORS = [
+  { key: 'A', label: '乐群性', desc: '外向热情 vs 内向孤寂', reverse: false, questions: [
+    '我喜欢主动与人打交道和社交活动',
+    '我很容易和刚认识的人熟络起来',
+  ]},
+  { key: 'B', label: '聪慧性', desc: '抽象思维 vs 具体思维', reverse: false, questions: [
+    '我学习新概念和新知识速度很快',
+    '我喜欢解决需要逻辑推理的难题',
+  ]},
+  { key: 'C', label: '稳定性', desc: '情绪稳定 vs 情绪波动', reverse: false, questions: [
+    '我能在压力下保持冷静和理性',
+    '我的情绪状态通常很平稳',
+  ]},
+  { key: 'E', label: '支配性', desc: '主导控制 vs 顺从谦逊', reverse: false, questions: [
+    '我喜欢在团队中掌控局面',
+    '在争论中我坚持自己的观点',
+  ]},
+  { key: 'F', label: '兴奋性', desc: '热情奔放 vs 谨慎严肃', reverse: false, questions: [
+    '我性格热情开朗，充满活力',
+    '我经常是活跃气氛的那个人',
+  ]},
+  { key: 'G', label: '有恒性', desc: '坚持负责 vs 权宜变通', reverse: false, questions: [
+    '我坚持遵守规则和道德准则',
+    '我做事情有始有终，不轻言放弃',
+  ]},
+  { key: 'H', label: '敢为性', desc: '大胆冒险 vs 胆小退缩', reverse: false, questions: [
+    '我敢于在公众场合发表不同意见',
+    '面对不确定和风险时我勇于尝试',
+  ]},
+  { key: 'I', label: '敏感性', desc: '敏感细腻 vs 理性务实', reverse: false, questions: [
+    '我对美和艺术有敏锐的感受力',
+    '我容易被他人的情绪所感染',
+  ]},
+  { key: 'L', label: '怀疑性', desc: '警惕怀疑 vs 信任接纳', reverse: false, questions: [
+    '我对陌生人的动机持怀疑态度',
+    '我倾向于质疑权威的说法',
+  ]},
+  { key: 'M', label: '幻想性', desc: '理想想象 vs 现实务实', reverse: false, questions: [
+    '我经常沉浸在自己的想象世界中',
+    '我更喜欢天马行空而非按部就班',
+  ]},
+  { key: 'N', label: '世故性', desc: '圆滑世故 vs 直率坦诚', reverse: false, questions: [
+    '我善于察言观色，懂得社交技巧',
+    '我说话做事比较注意方式和分寸',
+  ]},
+  { key: 'O', label: '忧郁性', desc: '自责内疚 vs 自信安详', reverse: false, questions: [
+    '我容易感到内疚和自责',
+    '我经常担心自己做错了什么',
+  ]},
+  { key: 'Q1', label: '试验性', desc: '创新变革 vs 保守传统', reverse: false, questions: [
+    '我喜欢尝试全新的做事方式',
+    '我乐于挑战和质疑传统观念',
+  ]},
+  { key: 'Q2', label: '独立性', desc: '自主独立 vs 依赖群体', reverse: false, questions: [
+    '我习惯自己独立做决定',
+    '我不太需要他人的认可和赞同',
+  ]},
+  { key: 'Q3', label: '自律性', desc: '自律严谨 vs 随性松散', reverse: false, questions: [
+    '我善于自我管理和约束',
+    '我会事先规划好再行动',
+  ]},
+  { key: 'Q4', label: '紧张性', desc: '紧张焦虑 vs 松弛平静', reverse: false, questions: [
+    '我经常感到时间紧迫和压力',
+    '我容易因为小事而烦躁不安',
+  ]},
+];
+
+// ===================================================================
+//  Build flat question list
+// ===================================================================
+
+function buildQuestions() {
+  const all = [];
+  let idx = 0;
+
+  // MBTI
+  MBTI_DIMS.forEach(dim => {
+    dim.questions.forEach((q, qi) => {
+      const isObj = typeof q === 'object';
+      all.push({
+        id: idx++,
+        section: 0,
+        sectionKey: 'mbti',
+        type: 'mbti',
+        dim: dim.key,
+        dimLabel: dim.labelA + ' vs ' + dim.labelB,
+        text: isObj ? q.text : q,
+        optionA: dim.labelA,
+        optionB: dim.labelB,
+        descA: isObj ? q.descA : '',
+        descB: isObj ? q.descB : '',
+      });
+    });
+  });
+
+  // Holland
+  HOLLAND_TYPES.forEach(type => {
+    type.questions.forEach(q => {
+      all.push({
+        id: idx++,
+        section: 1,
+        sectionKey: 'holland',
+        type: 'likert5',
+        dim: type.key,
+        dimLabel: type.label,
+        text: q,
+      });
+    });
+  });
+
+  // Big Five
+  BIGFIVE_DIMS.forEach(dim => {
+    dim.questions.forEach(q => {
+      all.push({
+        id: idx++,
+        section: 2,
+        sectionKey: 'bigfive',
+        type: 'likert5',
+        dim: dim.key,
+        dimLabel: dim.label,
+        reverse: dim.reverse,
+        text: q,
+      });
+    });
+  });
+
+  // 16PF
+  PF16_FACTORS.forEach(f => {
+    f.questions.forEach(q => {
+      all.push({
+        id: idx++,
+        section: 3,
+        sectionKey: 'pf16',
+        type: 'likert5',
+        dim: f.key,
+        dimLabel: f.label + ' · ' + f.desc,
+        reverse: f.reverse,
+        text: q,
+      });
+    });
+  });
+
+  return all;
+}
+
+const QUESTIONS = buildQuestions();
+const TOTAL = QUESTIONS.length;
+
+// ===================================================================
+//  State
+// ===================================================================
+
+let state = {
+  current: 0,
+  answers: new Array(TOTAL).fill(null),
+  started: false,
+};
+
+// ===================================================================
+//  DOM refs
+// ===================================================================
+
+const $ = id => document.getElementById(id);
+const pageWelcome = $('pageWelcome');
+const pageTest = $('pageTest');
+const pageResult = $('pageResult');
+const progressWrapper = $('progressWrapper');
+const sectionIndicators = $('sectionIndicators');
+const progressFill = $('progressFill');
+const progressLabel = $('progressLabel');
+const progressPercent = $('progressPercent');
+const questionContent = $('questionContent');
+const prevBtn = $('prevBtn');
+
+// ===================================================================
+//  Navigation
+// ===================================================================
+
+function startTest() {
+  state.started = true;
+  state.current = 0;
+  state.answers = new Array(TOTAL).fill(null);
+  pageWelcome.classList.remove('active');
+  pageTest.classList.add('active');
+  progressWrapper.style.display = 'block';
+  sectionIndicators.style.display = 'flex';
+  renderQuestion();
+  updateProgress();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.current];
+  const sec = SECTIONS[q.section];
+  const answered = state.answers[q.id];
+  const sectionTotal = QUESTIONS.filter(x => x.section === q.section).length;
+  const sectionIdx = QUESTIONS.filter(x => x.section === q.section).indexOf(q) + 1;
+
+  progressLabel.textContent = `${sec.short} (${sectionIdx}/${sectionTotal})`;
+  updateSectionIndicators();
+
+  if (q.type === 'mbti') {
+    renderMBTI(q, answered);
+  } else {
+    renderLikert(q, answered);
+  }
+
+  prevBtn.style.visibility = q.id === 0 ? 'hidden' : 'visible';
+}
+
+function renderMBTI(q, answered) {
+  questionContent.innerHTML = `
+    <div class="question-header">
+      <span class="question-section-label">MBTI · ${q.dim}维度</span>
+      <span class="question-number">${q.id + 1} / ${TOTAL}</span>
+    </div>
+    <div class="question-dimension">${q.dimLabel}</div>
+    <div class="question-text">${q.text}</div>
+    <div class="mbti-options">
+      <div class="mbti-option ${answered === 'A' ? 'selected' : ''}" data-value="A" onclick="answer(${q.id},'A')">
+        <div class="option-label">${q.descA}</div>
+      </div>
+      <div class="mbti-option ${answered === 'B' ? 'selected' : ''}" data-value="B" onclick="answer(${q.id},'B')">
+        <div class="option-label">${q.descB}</div>
+      </div>
+  `;
+}
+
+function renderLikert(q, answered) {
+  const labels = ['非常不符合', '比较不符合', '不确定', '比较符合', '非常符合'];
+  let optionsHTML = labels.map((l, i) => {
+    const val = i + 1;
+    const sel = answered === val ? 'selected' : '';
+    return `<div class="likert-option ${sel}" data-value="${val}" onclick="answer(${q.id},${val})">
+      <span class="value">${val}</span>
+      <span>${l}</span>
+    </div>`;
+  }).join('');
+
+  const sectionName = SECTIONS[q.section].short;
+  questionContent.innerHTML = `
+    <div class="question-header">
+      <span class="question-section-label">${sectionName} · ${q.dimLabel}</span>
+      <span class="question-number">${q.id + 1} / ${TOTAL}</span>
+    </div>
+    <div class="question-text">${q.text}</div>
+    <div class="likert-labels">
+      <span>非常不符合</span>
+      <span>比较不符合</span>
+      <span>不确定</span>
+      <span>比较符合</span>
+      <span>非常符合</span>
+    </div>
+    <div class="likert-options">
+      ${optionsHTML}
+    </div>
+  `;
+}
+
+function answer(id, val) {
+  state.answers[id] = val;
+  // Update UI
+  const container = questionContent;
+  const prevSelected = container.querySelector('.selected');
+  if (prevSelected) prevSelected.classList.remove('selected');
+  const newSelected = container.querySelector(`[data-value="${val}"]`);
+  if (newSelected) newSelected.classList.add('selected');
+  updateProgress();
+  // Auto advance after brief visual feedback (guard: only if still on this question)
+  setTimeout(() => {
+    if (id === TOTAL - 1) {
+      showNamePrompt();
+    } else if (state.current === id) {
+      state.current++;
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, 200);
+}
+
+function prevQuestion() {
+  if (state.current <= 0) return;
+  state.current--;
+  renderQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// keyboard support
+document.addEventListener('keydown', e => {
+  if (!state.started) return;
+  if (e.key === 'ArrowLeft') prevQuestion();
+});
+
+// ===================================================================
+//  Progress
+// ===================================================================
+
+function updateProgress() {
+  const answered = state.answers.filter(a => a !== null).length;
+  const pct = Math.round((answered / TOTAL) * 100);
+  progressFill.style.width = pct + '%';
+  progressPercent.textContent = pct + '% （' + answered + '/' + TOTAL + '题）';
+  updateSectionIndicators();
+}
+
+function updateSectionIndicators() {
+  const dots = document.querySelectorAll('.section-dot');
+  const curSection = state.started ? QUESTIONS[state.current].section : 0;
+  dots.forEach((dot, i) => {
+    dot.classList.remove('active', 'done');
+    if (i < curSection) dot.classList.add('done');
+    else if (i === curSection) dot.classList.add('active');
+  });
+}
+
+// ===================================================================
+//  RESULT COMPUTATION
+// ===================================================================
+
+function computeScores() {
+  const res = {};
+
+  // --- MBTI ---
+  res.mbti = { EI: 0, SN: 0, TF: 0, JP: 0 };
+  MBTI_DIMS.forEach(dim => {
+    dim.questions.forEach((_, qi) => {
+      // find the question
+      const q = QUESTIONS.find(q => q.section === 0 && q.dim === dim.key && QUESTIONS.filter(x => x.section === 0 && x.dim === dim.key).indexOf(q) === qi);
+      if (!q) return;
+      const ans = state.answers[q.id];
+      if (ans === 'A') res.mbti[dim.key] += 1; // count A = first type
+      // B = 0, so just count A's
+    });
+  });
+  // MBTI type string
+  const mbtiType = (res.mbti.EI >= 3 ? 'E' : 'I') + (res.mbti.SN >= 3 ? 'S' : 'N') + (res.mbti.TF >= 3 ? 'T' : 'F') + (res.mbti.JP >= 3 ? 'J' : 'P');
+  res.mbtiType = mbtiType;
+  res.mbtiScores = { E: res.mbti.EI, I: 5 - res.mbti.EI, S: res.mbti.SN, N: 5 - res.mbti.SN, T: res.mbti.TF, F: 5 - res.mbti.TF, J: res.mbti.JP, P: 5 - res.mbti.JP };
+
+  // --- Holland ---
+  res.holland = {};
+  HOLLAND_TYPES.forEach(type => {
+    let sum = 0;
+    type.questions.forEach((_, qi) => {
+      const q = QUESTIONS.find(q => q.section === 1 && q.dim === type.key && QUESTIONS.filter(x => x.section === 1 && x.dim === type.key).indexOf(q) === qi);
+      if (!q) return;
+      const ans = state.answers[q.id];
+      if (ans) sum += ans;
+    });
+    res.holland[type.key] = sum / type.questions.length;
+  });
+
+  // Holland top 3
+  const sortedHolland = Object.entries(res.holland).sort((a,b) => b[1] - a[1]);
+  res.hollandCode = sortedHolland.slice(0,3).map(x => x[0]).join('');
+
+  // --- Big Five ---
+  res.bigfive = {};
+  BIGFIVE_DIMS.forEach(dim => {
+    let sum = 0;
+    dim.questions.forEach((_, qi) => {
+      const q = QUESTIONS.find(q => q.section === 2 && q.dim === dim.key && QUESTIONS.filter(x => x.section === 2 && x.dim === dim.key).indexOf(q) === qi);
+      if (!q) return;
+      let ans = state.answers[q.id];
+      if (ans === null) ans = 3;
+      if (dim.reverse) ans = 6 - ans;
+      sum += ans;
+    });
+    res.bigfive[dim.key] = sum / dim.questions.length;
+  });
+
+  // --- 16PF ---
+  res.pf16 = {};
+  PF16_FACTORS.forEach(f => {
+    let sum = 0;
+    f.questions.forEach((_, qi) => {
+      const q = QUESTIONS.find(q => q.section === 3 && q.dim === f.key && QUESTIONS.filter(x => x.section === 3 && x.dim === f.key).indexOf(q) === qi);
+      if (!q) return;
+      let ans = state.answers[q.id];
+      if (ans === null) ans = 3;
+      if (f.reverse) ans = 6 - ans;
+      sum += ans;
+    });
+    res.pf16[f.key] = sum / f.questions.length;
+  });
+
+  return res;
+}
+
+// ===================================================================
+//  Career Mapping & Analysis
+// ===================================================================
+
+const MBTI_CAREERS = {
+  'ISTJ': { good: ['审计师', '法官', '会计师', '项目经理', '数据分析师', '工程师'], bad: ['创意总监', '心理咨询师', '艺术家'] },
+  'ISFJ': { good: ['医生', '教师', '社工', '护理人员', '行政主管', '图书管理员'], bad: ['企业家', '风险投资人', '销售经理'] },
+  'INFJ': { good: ['心理咨询师', '作家', '大学教授', '人力资源总监', '社会活动家', '生涯规划师'], bad: ['销售代表', '股票交易员', '审计师'] },
+  'INTJ': { good: ['战略顾问', '科学家', '软件架构师', '投资分析师', '大学教授', '系统工程师'], bad: ['客户服务', '销售员', '行政助理'] },
+  'ISTP': { good: ['工程师', '飞行员', '外科医生', '特种兵', '程序员', '机械师'], bad: ['客户经理', '社会工作者', '教师'] },
+  'ISFP': { good: ['设计师', '摄影师', '园林景观师', '音乐人', '厨师', '心理咨询师'], bad: ['企业高管', '销售总监', '律师'] },
+  'INFP': { good: ['作家', '心理咨询师', '艺术治疗师', '编辑', '社工', '品牌策划'], bad: ['会计', '数据分析师', '项目经理'] },
+  'INTP': { good: ['科学家', '程序员', '大学教授', '数据分析师', '系统架构师', '发明家'], bad: ['销售经理', '公关专员', '人力资源'] },
+  'ESTP': { good: ['企业家', '销售总监', '市场营销', '演员', '体育经纪人', '风险投资人'], bad: ['档案管理员', '实验室技术员', '审计师'] },
+  'ESFP': { good: ['演员', '主持人', '销售顾问', '活动策划', '旅游体验师', '培训师'], bad: ['数据分析师', '会计师', '研究员'] },
+  'ENFP': { good: ['记者', '广告创意', '品牌经理', '心理咨询师', '培训师', '社会活动家'], bad: ['会计', '审计师', '行政专员'] },
+  'ENTP': { good: ['创业者', '产品经理', '律师', '投资银行家', '战略顾问', '发明家'], bad: ['行政专员', '会计师', '质检员'] },
+  'ESTJ': { good: ['企业高管', '项目经理', '法官', '军官', '工厂厂长', '财务总监'], bad: ['艺术家', '心理咨询师', '自由职业者'] },
+  'ESFJ': { good: ['教师', '护士', '人力资源经理', '客服主管', '社区工作者', '培训经理'], bad: ['程序员', '研究员', '数据分析师'] },
+  'ENFJ': { good: ['培训总监', '人力资源总监', '心理咨询师', '教师', '公关经理', '生涯规划师'], bad: ['技术研发', '会计', '质检'] },
+  'ENTJ': { good: ['CEO', '战略总监', '管理咨询师', '律师', '投资总监', '产品总监'], bad: ['客服专员', '图书管理员', '技术员'] },
+};
+
+const HOLLAND_DESC = {
+  'R': '动手操作、机械制造、户外工作',
+  'I': '科学研究、分析探索、理论创新',
+  'A': '艺术创作、创意表达、审美设计',
+  'S': '助人服务、教育培养、社会公益',
+  'E': '商业经营、领导管理、创业冒险',
+  'C': '秩序规范、数据管理、精确执行',
+};
+
+function getMBTIDescription(type) {
+  const desc = {
+    'ISTJ':'严谨务实、负责可靠', 'ISFJ':'温暖细心、忠城服务', 'INFJ':'洞察力强、理想主义', 'INTJ':'战略思维、独立果断',
+    'ISTP':'冷静灵活、技术高手', 'ISFP':'敏感细腻、艺术气质', 'INFP':'理想主义、深度共情', 'INTP':'逻辑分析、创新思维',
+    'ESTP':'精力充沛、行动力强', 'ESFP':'热情开朗、社交达人', 'ENFP':'充满激情、创意无限', 'ENTP':'机智善辩、创新开拓',
+    'ESTJ':'果断务实、组织管理', 'ESFJ':'热情友善、乐于助人', 'ENFJ':'领袖魅力、激励他人', 'ENTJ':'天生领袖、战略远见',
+  };
+  return desc[type] || type;
+}
+
+// ===================================================================
+//  Name Prompt (when all questions done)
+// ===================================================================
+
+let userName = '';
+
+function showNamePrompt() {
+  questionContent.innerHTML = `
+    <div class="name-prompt">
+      <div class="name-prompt-icon">📋</div>
+      <h2>全部答完！ 🎉</h2>
+      <p style="color:var(--text-light);margin-bottom:24px">你已完成全部 ${TOTAL} 道测评题目，输入姓名生成专属天赋报告</p>
+      <div class="name-input-wrapper">
+        <input type="text" id="userNameInput" class="name-input" placeholder="请输入你的姓名" maxlength="20"
+          onkeydown="if(event.key==='Enter')generateReport()" autocomplete="off">
+      </div>
+      <button class="btn" onclick="generateReport()">生成报告</button>
+    </div>
+  `;
+  setTimeout(() => document.getElementById('userNameInput')?.focus(), 100);
+  prevBtn.style.visibility = 'visible';
+  prevBtn.textContent = '← 修改答案';
+}
+
+function generateReport() {
+  const input = document.getElementById('userNameInput');
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name) {
+    input.style.borderColor = '#e74c3c';
+    input.placeholder = '⚠️ 请先输入姓名';
+    setTimeout(() => { input.style.borderColor = ''; input.placeholder = '请输入你的姓名'; }, 2000);
+    return;
+  }
+  userName = name;
+  showResult();
+}
+
+// ===================================================================
+//  Show Result
+// ===================================================================
+
+function showResult() {
+  pageTest.classList.remove('active');
+  pageResult.classList.add('active');
+  progressWrapper.style.display = 'none';
+  sectionIndicators.style.display = 'none';
+
+  document.getElementById('resultContent').innerHTML = '<div class="loading"><div class="spinner"></div>⏳ 正在生成报告...</div>';
+
+  const scores = computeScores();
+  const r = scores;
+  const displayName = userName || '匿名';
+
+  // --- 职业推荐计算（与原逻辑相同）---
+  const mbtiCareer = MBTI_CAREERS[r.mbtiType] || { good: ['咨询师','管理者','教育者'], bad: [] };
+  const hollandTop = r.hollandCode.split('').map(c => HOLLAND_TYPES.find(t => t.key === c)).filter(Boolean);
+  const bfProfile = [];
+  BIGFIVE_DIMS.forEach(dim => { const val = r.bigfive[dim.key]; bfProfile.push({ key: dim.key, label: dim.label, val, level: val >= 4 ? '高' : val >= 3 ? '中' : '低' }); });
+  const pfProfile = [];
+  PF16_FACTORS.forEach(f => { const val = r.pf16[f.key]; pfProfile.push({ key: f.key, label: f.label, val, level: val >= 4 ? '高' : val >= 3 ? '中' : '低', desc: f.desc }); });
+
+  const allSuggestions = [];
+  mbtiCareer.good.forEach(c => allSuggestions.push({ career: c, source: 'MBTI', reason: `你的性格类型 ${r.mbtiType}（${getMBTIDescription(r.mbtiType)}）非常适合` }));
+  hollandTop.forEach(t => {
+    const careersForType = { 'R':['机械工程师','建筑师','飞行员','外科医生','运动员','技术员'],'I':['科学家','数据分析师','研究员','大学教授','程序员','医生'],'A':['设计师','作家','音乐人','摄影师','策展人','广告创意'],'S':['教师','心理咨询师','护士','社工','培训师','人力资源'],'E':['企业家','销售总监','项目经理','投资经理','市场总监','CEO'],'C':['会计师','审计师','银行职员','行政主管','数据分析师','档案管理'] };
+    (careersForType[t.key] || []).forEach(c => allSuggestions.push({ career: c, source: '霍兰德', reason: `你的霍兰德${t.key}型兴趣（${t.label}）匹配` }));
+  });
+  const O=r.bigfive.O,C=r.bigfive.C,E=r.bigfive.E,A=r.bigfive.A,N_=r.bigfive.N;
+  if(O>=3.5) allSuggestions.push({career:'创意总监',source:'大五',reason:'高开放性适合创新类工作'});
+  if(C>=3.5) allSuggestions.push({career:'项目经理',source:'大五',reason:'高尽责性适合管理类工作'});
+  if(E>=3.5) allSuggestions.push({career:'销售总监',source:'大五',reason:'高外向性适合社交类工作'});
+  if(A>=3.5) allSuggestions.push({career:'咨询顾问',source:'大五',reason:'高宜人性适合服务类工作'});
+  if(N_<=2.5) allSuggestions.push({career:'管理者',source:'大五',reason:'情绪稳定适合高压管理岗位'});
+  if(r.pf16.E>=3.5) allSuggestions.push({career:'企业管理者',source:'16PF',reason:'高支配性适合领导岗位'});
+  if(r.pf16.H>=3.5) allSuggestions.push({career:'创业者',source:'16PF',reason:'高敢为性适合创业'});
+  if(r.pf16.Q1>=3.5) allSuggestions.push({career:'创新顾问',source:'16PF',reason:'高试验性适合创新工作'});
+  if(r.pf16.G>=3.5) allSuggestions.push({career:'审计/质量管理',source:'16PF',reason:'高有恒性适合质量管理工作'});
+  const seen=new Set(); const uniqueCareers=allSuggestions.filter(s=>{const k=s.career; if(seen.has(k))return false; seen.add(k); return true;});
+  const careerScore={}; uniqueCareers.forEach(s=>{if(!careerScore[s.career])careerScore[s.career]={count:0,reasons:[],sources:[]}; careerScore[s.career].count++; careerScore[s.career].reasons.push(s.reason); careerScore[s.career].sources.push(s.source);});
+  const rankedCareers = Object.entries(careerScore).sort((a,b)=>b[1].count-a[1].count);
+  const badCareers = mbtiCareer.bad || [];
+
+  // ====== HTML 生成（简洁直观）======
+
+  // 1. 头部 - 姓名 + 类型徽章
+  let html = `
+    <div class="result-section" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">🎯</div>
+      <h2>${displayName} 的天赋报告</h2>
+      <div class="badge">${r.mbtiType} · ${r.hollandCode}</div>
+      <p style="color:var(--text-light);font-size:14px;margin-top:8px">${getMBTIDescription(r.mbtiType)}</p>
+    </div>`;
+
+  // 2. Top 3 推荐职业
+  html += `
+    <div class="result-section">
+      <h2>🏆 推荐职业 Top 3</h2>
+      ${rankedCareers.slice(0,3).map(([career, info], i) => `
+        <div class="career-card">
+          <h4>${['🥇','🥈','🥉'][i]} ${career}</h4>
+          <p style="font-size:13px;color:var(--text-light)">${info.reasons[0]}</p>
+          <p style="font-size:12px;color:var(--text-light);margin-top:4px">匹配：${info.sources.join('、')}</p>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // 3. 雷达图（霍兰德六边形）
+  html += `
+    <div class="result-section">
+      <h2>📊 霍兰德兴趣雷达</h2>
+      <div class="chart-container">
+        <canvas id="radarChart" width="300" height="300"></canvas>
+      </div>
+    </div>`;
+
+  // 4. MBTI 维度分数（横向条）
+  html += `
+    <div class="result-section">
+      <h2>🧠 MBTI · ${r.mbtiType}</h2>
+      ${['EI','SN','TF','JP'].map(dim => {
+        const a = dim[0], b = dim[1];
+        const av = r.mbtiScores[a], bv = r.mbtiScores[b];
+        return `
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:2px">
+              <span>${a}</span><span>${b}</span>
+            </div>
+            <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,0.05)">
+              <div style="width:${(av/5)*100}%;background:var(--primary);transition:width 0.5s"></div>
+              <div style="width:${(bv/5)*100}%;background:var(--accent);transition:width 0.5s"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:2px">
+              <span>${av}/5</span><span>${bv}/5</span>
+            </div>
+          </div>`;
+      }).join('')}
+      <p style="font-size:13px;color:var(--text-light);margin-top:8px">${r.mbtiType}：${getMBTIDescription(r.mbtiType)}</p>
+    </div>`;
+
+  // 5. 霍兰德分数列表
+  html += `
+    <div class="result-section">
+      <h2>🛠️ 霍兰德职业兴趣 · ${r.hollandCode}</h2>
+      ${HOLLAND_TYPES.map(t => `
+        <div class="dim-row">
+          <span class="dim-label">${t.label}</span>
+          <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${((r.holland[t.key]||0)/5)*100}%"></div></div>
+          <span class="dim-value">${(r.holland[t.key]||0).toFixed(1)}</span>
+        </div>
+      `).join('')}
+      <p style="font-size:13px;color:var(--text-light);margin-top:6px">偏好：${hollandTop.map(t=>t.label).join('、')}</p>
+    </div>`;
+
+  // 6. 大五人格
+  html += `
+    <div class="result-section">
+      <h2>🌊 大五人格</h2>
+      ${bfProfile.map(p => `
+        <div style="margin-bottom:6px">
+          <div class="dim-row" style="padding:2px 0">
+            <span class="dim-label">${p.label}</span>
+            <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${(p.val/5)*100}%"></div></div>
+            <span class="dim-value">${p.val.toFixed(1)}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // 7. 16PF（两列网格）
+  html += `
+    <div class="result-section">
+      <h2>🔬 16PF 深层人格</h2>
+      <div class="pf-grid">
+        ${pfProfile.map(p => `
+          <div class="dim-row" style="padding:3px 0;font-size:13px">
+            <span class="dim-label" style="min-width:50px">${p.label}</span>
+            <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${(p.val/5)*100}%"></div></div>
+            <span class="dim-value" style="min-width:28px;font-size:12px">${p.val.toFixed(1)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+
+  // 8. 谨慎职业
+  if (badCareers.length > 0) {
+    html += `
+      <div class="result-section">
+        <h2>⚠️ 谨慎考虑</h2>
+        ${badCareers.map(c => `
+          <div class="career-card bad">
+            <h4>✕ ${c}</h4>
+            <p style="font-size:13px;color:var(--text-light)">基于 MBTI ${r.mbtiType} 特质，这类工作可能不太适合你</p>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  // 9. 底部操作按钮
+  html += `
+    <div style="text-align:center;padding:10px 0 30px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="saveReport()">💾 保存为 MD 文件</button>
+      <button class="btn" onclick="restartTest()">🔄 重新测试</button>
+    </div>`;
+
+  document.getElementById('resultContent').innerHTML = html;
+
+  // 绘制雷达图
+  setTimeout(() => drawRadarChart(r.holland), 100);
+}
+
+// ===================================================================
+//  Save Report as Markdown (.md)
+// ===================================================================
+
+function saveReport() {
+  const displayName = userName || '匿名';
+  const scores = computeScores();
+  const r = scores;
+  const date = new Date().toLocaleString('zh-CN');
+
+  // --- 准备数据 ---
+  const mbtiCareer = MBTI_CAREERS[r.mbtiType] || { good: [], bad: [] };
+  const hollandTop = r.hollandCode.split('').map(c => HOLLAND_TYPES.find(t => t.key === c)).filter(Boolean);
+  const bfProfile = [];
+  BIGFIVE_DIMS.forEach(dim => { const val = r.bigfive[dim.key]; bfProfile.push({ key: dim.key, label: dim.label, val, level: val >= 4 ? '高' : val >= 3 ? '中' : '低' }); });
+  const pfProfile = [];
+  PF16_FACTORS.forEach(f => { const val = r.pf16[f.key]; pfProfile.push({ key: f.key, label: f.label, val, level: val >= 4 ? '高' : val >= 3 ? '中' : '低', desc: f.desc }); });
+
+  // --- 职业推荐（同 showResult）---
+  const allSuggestions = [];
+  mbtiCareer.good.forEach(c => allSuggestions.push({ career: c, source: 'MBTI', reason: `你的性格类型 ${r.mbtiType}（${getMBTIDescription(r.mbtiType)}）非常适合` }));
+  hollandTop.forEach(t => {
+    const careersForType = { 'R':['机械工程师','建筑师','飞行员','外科医生','运动员','技术员'],'I':['科学家','数据分析师','研究员','大学教授','程序员','医生'],'A':['设计师','作家','音乐人','摄影师','策展人','广告创意'],'S':['教师','心理咨询师','护士','社工','培训师','人力资源'],'E':['企业家','销售总监','项目经理','投资经理','市场总监','CEO'],'C':['会计师','审计师','银行职员','行政主管','数据分析师','档案管理'] };
+    (careersForType[t.key] || []).forEach(c => allSuggestions.push({ career: c, source: '霍兰德', reason: `你的霍兰德${t.key}型兴趣（${t.label}）匹配` }));
+  });
+  const O=r.bigfive.O,C=r.bigfive.C,E=r.bigfive.E,A=r.bigfive.A,N_=r.bigfive.N;
+  if(O>=3.5) allSuggestions.push({career:'创意总监',source:'大五',reason:'高开放性适合创新类工作'});
+  if(C>=3.5) allSuggestions.push({career:'项目经理',source:'大五',reason:'高尽责性适合管理类工作'});
+  if(E>=3.5) allSuggestions.push({career:'销售总监',source:'大五',reason:'高外向性适合社交类工作'});
+  if(A>=3.5) allSuggestions.push({career:'咨询顾问',source:'大五',reason:'高宜人性适合服务类工作'});
+  if(N_<=2.5) allSuggestions.push({career:'管理者',source:'大五',reason:'情绪稳定适合高压管理岗位'});
+  if(r.pf16.E>=3.5) allSuggestions.push({career:'企业管理者',source:'16PF',reason:'高支配性适合领导岗位'});
+  if(r.pf16.H>=3.5) allSuggestions.push({career:'创业者',source:'16PF',reason:'高敢为性适合创业'});
+  if(r.pf16.Q1>=3.5) allSuggestions.push({career:'创新顾问',source:'16PF',reason:'高试验性适合创新工作'});
+  if(r.pf16.G>=3.5) allSuggestions.push({career:'审计/质量管理',source:'16PF',reason:'高有恒性适合质量管理工作'});
+  const seen=new Set(); const uniqueCareers=allSuggestions.filter(s=>{const k=s.career; if(seen.has(k))return false; seen.add(k); return true;});
+  const careerScore={}; uniqueCareers.forEach(s=>{if(!careerScore[s.career])careerScore[s.career]={count:0,reasons:[],sources:[]}; careerScore[s.career].count++; careerScore[s.career].reasons.push(s.reason); careerScore[s.career].sources.push(s.source);});
+  const rankedCareers = Object.entries(careerScore).sort((a,b)=>b[1].count-a[1].count);
+  const badCareers = mbtiCareer.bad || [];
+
+  // === 生成 Markdown 文本 ===
+  let md = `# ${displayName} 的天赋测评报告\n\n`;
+  md += `> 报告生成时间：${date}\n\n`;
+  md += `---\n\n`;
+
+  // 1. 概览
+  md += `## 📋 概览\n\n`;
+  md += `| 项目 | 结果 |\n|---|---|\n`;
+  md += `| **MBTI 性格类型** | ${r.mbtiType} — ${getMBTIDescription(r.mbtiType)} |\n`;
+  md += `| **霍兰德代码** | ${r.hollandCode} |\n`;
+  md += `| **姓名** | ${displayName} |\n\n`;
+
+  // 2. 推荐职业
+  md += `## 🏆 推荐职业 Top 3\n\n`;
+  rankedCareers.slice(0,3).forEach(([career, info], i) => {
+    const medals = ['🥇','🥈','🥉'];
+    md += `### ${medals[i]} ${career}\n\n`;
+    md += `- **匹配来源**：${info.sources.join('、')}\n`;
+    md += `- **理由**：${info.reasons[0]}\n\n`;
+  });
+
+  // 3. MBTI
+  md += `## 🧠 MBTI 性格类型 — ${r.mbtiType}\n\n`;
+  md += `> ${getMBTIDescription(r.mbtiType)}\n\n`;
+  md += `| 维度 | 分数 |\n|---|---|\n`;
+  Object.entries(r.mbtiScores).forEach(([k,v]) => { md += `| ${k} | ${v}/5 |\n`; });
+  md += `\n`;
+
+  // 4. 霍兰德
+  md += `## 🛠️ 霍兰德职业兴趣 — ${r.hollandCode}\n\n`;
+  md += `| 类型 | 分数 | 描述 |\n|---|---|---|\n`;
+  HOLLAND_TYPES.forEach(t => {
+    md += `| ${t.label} | ${(r.holland[t.key]||0).toFixed(1)} | ${HOLLAND_DESC[t.key] || ''} |\n`;
+  });
+  md += `\n**偏好说明**：你喜欢 ${hollandTop.map(t => HOLLAND_DESC[t.key] || t.label).join('、')} 类型的工作。\n\n`;
+
+  // 5. 大五人格
+  md += `## 🌊 大五人格\n\n`;
+  md += `| 维度 | 分数 | 水平 |\n|---|---|---|\n`;
+  bfProfile.forEach(p => { md += `| ${p.label} | ${p.val.toFixed(1)} | ${p.level} |\n`; });
+  md += `\n`;
+
+  // 6. 16PF
+  md += `## 🔬 卡特尔 16PF 深层人格\n\n`;
+  md += `| 因子 | 分数 | 水平 | 说明 |\n|---|---|---|---|\n`;
+  pfProfile.forEach(p => { md += `| ${p.label} | ${p.val.toFixed(1)} | ${p.level} | ${p.desc} |\n`; });
+  md += `\n`;
+
+  // 7. 谨慎职业
+  if (badCareers.length > 0) {
+    md += `## ⚠️ 需要谨慎考虑的职业\n\n`;
+    badCareers.forEach(c => { md += `- ✕ **${c}**：基于你的 MBTI ${r.mbtiType} 特质，这类工作可能不太适合你\n`; });
+    md += `\n`;
+  }
+
+  // 8. 综合建议
+  md += `## 💡 综合建议\n\n`;
+  md += `${displayName}，你的 MBTI 类型为 **${r.mbtiType}**（${getMBTIDescription(r.mbtiType)}），`;
+  md += `霍兰德代码为 **${r.hollandCode}**，`;
+  md += `大五人格中突出的特质是 ${bfProfile.filter(p => p.val >= 3.5).map(p => p.label).join('、')}。\n\n`;
+  md += `最适合你的职业方向应该是能够发挥你的性格优势、同时满足你的职业兴趣的工作。`;
+  md += `建议重点关注"推荐职业 Top 3"中的方向，并结合你的教育背景和实际经验综合考虑。\n\n`;
+  md += `---\n\n`;
+  md += `*报告由四大维度天赋测评系统生成*  `;
+
+  // 下载 .md 文件
+  const filename = `${displayName}_天赋测评报告_${new Date().toISOString().slice(0,10)}.md`;
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+
+  showSaveToast();
+}
+
+function showSaveToast() {
+  const existing = document.querySelector('.save-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'save-toast';
+  toast.innerHTML = '✅ 已下载！可在电脑「下载」文件夹中找到 .md 文件';
+  toast.style.cssText = `
+    position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+    background: #1a2332; color: #eee; padding: 14px 28px; border-radius: 12px;
+    border: 1px solid rgba(100,255,218,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    font-size: 14px; z-index: 1000; animation: fadeInUp 0.3s ease;
+    text-align: center; max-width: 90vw;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 4000);
+}
+
+// ===================================================================
+//  Radar Chart (Canvas)
+// ===================================================================
+
+function drawRadarChart(hollandScores) {
+  const canvas = document.getElementById('radarChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = 300, H = 300, cx = W/2, cy = H/2, R = 110;
+
+  const labels = ['R\n现实型', 'I\n研究型', 'A\n艺术型', 'S\n社会型', 'E\n企业型', 'C\n常规型'];
+  const keys = ['R','I','A','S','E','C'];
+  const n = 6;
+  const maxScore = 5;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // --- 背景网格 ---
+  for (let ring = 1; ring <= 5; ring++) {
+    const r = (R / 5) * ring;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 / n) * i - Math.PI/2;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // --- 轴向线 ---
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 / n) * i - Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.stroke();
+  }
+
+  // --- 数据区域 ---
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const val = hollandScores[keys[i]] || 0;
+    const r = (val / maxScore) * R;
+    const angle = (Math.PI * 2 / n) * i - Math.PI/2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(108,92,231,0.25)';
+  ctx.fill();
+  ctx.strokeStyle = '#a29bfe';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // --- 数据点 ---
+  for (let i = 0; i < n; i++) {
+    const val = hollandScores[keys[i]] || 0;
+    const r = (val / maxScore) * R;
+    const angle = (Math.PI * 2 / n) * i - Math.PI/2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#a29bfe';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // --- 标签 ---
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 / n) * i - Math.PI/2;
+    const labelR = R + 24;
+    const x = cx + labelR * Math.cos(angle);
+    const y = cy + labelR * Math.sin(angle);
+    const lines = labels[i].split('\n');
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    lines.forEach((line, li) => {
+      ctx.fillText(line, x, y + (li - (lines.length-1)/2) * 14);
+    });
+
+    // 显示分值
+    const val = hollandScores[keys[i]] || 0;
+    const valR = (val / maxScore) * R;
+    const vx = cx + valR * Math.cos(angle);
+    const vy = cy + valR * Math.sin(angle);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#a29bfe';
+    ctx.fillText(val.toFixed(1), vx, vy - 10);
+  }
+}
+
+// Restart
+function restartTest() {
+  pageResult.classList.remove('active');
+  pageWelcome.classList.add('active');
+  state.started = false;
+  state.current = 0;
+  state.answers = new Array(TOTAL).fill(null);
+}
+</script>
+</html>
